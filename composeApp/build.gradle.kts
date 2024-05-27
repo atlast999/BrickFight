@@ -59,10 +59,14 @@ kotlin {
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
-            implementation(compose.material)
+            implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+
+            implementation(libs.napier.logging)
+            implementation(libs.androidx.navigation.compose)
+
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
