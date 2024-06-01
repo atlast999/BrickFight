@@ -57,7 +57,6 @@ fun RegisterUI(
         Spacer(modifier = Modifier.weight(1f))
         OutlinedButton(
             onClick = onRegisterClicked,
-            enabled = username.length > 5,
         ) {
             Text(
                 text = "Register"
