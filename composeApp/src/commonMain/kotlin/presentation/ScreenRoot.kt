@@ -35,6 +35,7 @@ import androidx.navigation.compose.rememberNavController
 import io.github.aakira.napier.Napier
 import presentation.authentication.login.LoginUI
 import presentation.authentication.login.LoginViewModel
+import presentation.authentication.register.RegisterUI
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -129,7 +130,7 @@ internal fun RootScreen() {
                     onLoginClicked = {
                     },
                     onRegisterClicked = {
-
+                        navController.navigate(Screen.Signup.name)
                     }
                 )
             }
@@ -142,7 +143,23 @@ internal fun RootScreen() {
                     navController.navigateUp()
                 },
             ) {
-                Text(text = "Signup")
+                RegisterUI(
+                    email = "",
+                    username = "",
+                    password = "",
+                    onEmailChanged = {
+
+                    },
+                    onUsernameChanged = {
+
+                    },
+                    onPasswordChanged = {
+
+                    },
+                    onRegisterClicked = {
+
+                    }
+                )
             }
 
         }
