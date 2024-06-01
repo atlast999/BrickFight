@@ -2,6 +2,7 @@ package presentation.authentication.register
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -53,6 +54,7 @@ fun RegisterUI(
                 )
             }
         )
+        Spacer(modifier = Modifier.weight(1f))
         OutlinedButton(
             onClick = onRegisterClicked,
             enabled = username.length > 5,
