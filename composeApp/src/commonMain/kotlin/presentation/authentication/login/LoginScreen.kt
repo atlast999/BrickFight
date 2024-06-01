@@ -1,11 +1,10 @@
-package presentation.authentication
+package presentation.authentication.login
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -17,42 +16,56 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun LoginUI(
     username: String,
     onUsernameChanged: (String) -> Unit,
+    password: String,
+    onPasswordChanged: (String) -> Unit,
     onLoginClicked: () -> Unit,
+    onRegisterClicked: () -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().fillMaxHeight(0.5f),
-        verticalArrangement = Arrangement.SpaceEvenly,
+        modifier = Modifier.fillMaxHeight(),
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         val curLoginClicked by remember {
             mutableStateOf(onLoginClicked)
         }
-
+        Spacer(modifier = Modifier.weight(1f))
         OutlinedTextField(
             value = username,
             onValueChange = onUsernameChanged,
+            label = {
+                Text(
+                    text = "Username"
+                )
+            }
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = password,
+            onValueChange = onPasswordChanged,
+            label = {
+                Text(
+                    text = "Password"
+                )
+            }
         )
-        if (username.length > 5) {
-            Text(
-                "Enable login this is a f*cking long text that cannot fit into a single screen Enable login this is a f*cking long text that cannot fit into a single screen ",
-                maxLines = 2,
-                modifier = Modifier.basicMarquee()
-            )
-        }
+        Text(
+            text = "Register",
+            modifier = Modifier.align(Alignment.End).clickable {
+                onRegisterClicked()
+            }
+        )
+        Spacer(modifier = Modifier.weight(1f))
         OutlinedButton(
+            modifier = Modifier,
             onClick = curLoginClicked,
+            enabled = username.length > 5,
         ) {
             Text(
-                text = "Navigate"
+                text = "Login"
             )
         }
     }

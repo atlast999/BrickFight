@@ -33,8 +33,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.aakira.napier.Napier
-import presentation.authentication.LoginUI
-import presentation.authentication.LoginViewModel
+import presentation.authentication.login.LoginUI
+import presentation.authentication.login.LoginViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -124,9 +124,13 @@ internal fun RootScreen() {
                 LoginUI(
                     username = uiState.username,
                     onUsernameChanged = viewModel::onUsernameChanged,
+                    password = uiState.password,
+                    onPasswordChanged = viewModel::onPasswordChanged,
                     onLoginClicked = {
-                        navController.navigate(Screen.Signup.name)
                     },
+                    onRegisterClicked = {
+
+                    }
                 )
             }
         }
