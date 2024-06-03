@@ -36,6 +36,7 @@ import io.github.aakira.napier.Napier
 import presentation.authentication.login.LoginUI
 import presentation.authentication.login.LoginViewModel
 import presentation.authentication.register.RegisterUI
+import presentation.authentication.register.RegisterViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -137,29 +138,36 @@ internal fun RootScreen() {
         }
 
         composable(Screen.Signup.name) {
+            val viewModel = viewModel<RegisterViewModel>(
+                factory = remember {
+                    viewModelFactory {
+                        initializer {
+                            RegisterViewModel()
+                        }
+                    }
+                }
+            )
+            val uiState by viewModel.state.collectAsState()
             ScreenWrapper(
+                isLoading = uiState.isLoading,
                 title = Screen.Signup.title,
                 navigationAction = {
                     navController.navigateUp()
                 },
             ) {
-                RegisterUI(
-                    email = "",
-                    username = "",
-                    password = "",
-                    onEmailChanged = {
-
-                    },
-                    onUsernameChanged = {
-
-                    },
-                    onPasswordChanged = {
-
-                    },
-                    onRegisterClicked = {
-
-                    }
-                )
+                if (uiState.errorMessage == null) {
+                    RegisterUI(
+                        email = uiState.email,
+                        username = uiState.username,
+                        password = uiState.password,
+                        onEmailChanged = viewModel::onEmailChanged,
+                        onUsernameChanged = viewModel::onUsernameChanged,
+                        onPasswordChanged = viewModel::onPasswordChanged,
+                        onRegisterClicked = viewModel::onRegisterClick,
+                    )
+                } else {
+                    Text(text = uiState.errorMessage!!)
+                }
             }
 
         }
