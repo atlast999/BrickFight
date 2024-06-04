@@ -1,10 +1,16 @@
 package network
 
+import data.setting.SettingManager
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.authProvider
+import io.ktor.client.plugins.auth.providers.BearerAuthProvider
+import io.ktor.client.plugins.auth.providers.BearerTokens
+import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -18,12 +24,13 @@ import io.ktor.serialization.kotlinx.KotlinxWebsocketSerializationConverter
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
+
 object KtorClient {
-    fun createClient() = HttpClient {
+    fun createClient(settingManager: SettingManager) = HttpClient {
         defaultRequest {
             url {
                 protocol = URLProtocol.HTTP
-                host = "192.168.91.102"
+                host = "127.0.0.1"
                 port = 8080
 //                    path("api/")
                 path("/")
@@ -32,11 +39,12 @@ object KtorClient {
         installLogging()
         installTimeOut()
         installRetry()
-//            install(HttpCache)
+        install(HttpCache)
 //            install(Resources)
-//            install(WebSockets) {
-//                contentConverter = KotlinxWebsocketSerializationConverter(Json)
-//            }
+        install(WebSockets) {
+            contentConverter = KotlinxWebsocketSerializationConverter(Json)
+        }
+        installAuth(settingManager = settingManager)
         installContentNegotiation()
     }
 
@@ -51,7 +59,7 @@ object KtorClient {
                 }
 
             }
-            level = LogLevel.BODY
+            level = LogLevel.ALL
         }
     }
 
@@ -64,25 +72,34 @@ object KtorClient {
     }
 
     private fun HttpClientConfig<*>.installRetry() {
-        install(HttpRequestRetry) {
-            retryOnServerErrors(maxRetries = 2)
-            exponentialDelay()
-        }
-    }
-
-    private fun HttpClientConfig<*>.installAuth() {
-//        bearer {
-//            loadTokens {
-//                BearerTokens("", "")
-//            }
-//            refreshTokens {
-////                        this.client
-//                BearerTokens("", "")
-//            }
-//            sendWithoutRequest { true }
+//        install(HttpRequestRetry) {
+//            retryOnServerErrors(maxRetries = 2)
+//            exponentialDelay()
 //        }
     }
 
+    private fun HttpClientConfig<*>.installAuth(settingManager: SettingManager) {
+        install(Auth) {
+            bearer {
+                loadTokens {
+                    Napier.i("loadTokens: ${settingManager.getToken()}")
+                    BearerTokens(
+                        accessToken = settingManager.getToken() ?: "",
+                        refreshToken = "",
+                    )
+                }
+                refreshTokens {
+//                        this.client
+                    Napier.i("refreshTokens: ${settingManager.getToken()}")
+                    BearerTokens(
+                        accessToken = settingManager.getToken() ?: "",
+                        refreshToken = "",
+                    )
+                }
+                sendWithoutRequest { true }
+            }
+        }
+    }
 
     private fun HttpClientConfig<*>.installContentNegotiation() {
         install(ContentNegotiation) {
@@ -92,6 +109,5 @@ object KtorClient {
             })
         }
     }
-
 
 }
