@@ -52,10 +52,20 @@ class ListRoomViewModel(
             )
         )
         _joinedRoomChannel.send(response.roomId)
+    }.invokeOnCompletion {
+        _state.update { it.copy(isLoading = false) }
     }
 
     fun joinRoom(room: Room) = viewModelScope.launch {
-
+        _state.update {
+            it.copy(
+                isLoading = true
+            )
+        }
+        roomRepository.joinRoom(roomId = room.id)
+        _joinedRoomChannel.send(room.id)
+    }.invokeOnCompletion {
+        _state.update { it.copy(isLoading = false) }
     }
 
     data class State(

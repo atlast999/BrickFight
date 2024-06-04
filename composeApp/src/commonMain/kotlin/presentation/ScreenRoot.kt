@@ -34,12 +34,15 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinExperimentalAPI
 import presentation.authentication.login.LoginUI
 import presentation.authentication.login.LoginViewModel
 import presentation.authentication.register.RegisterUI
 import presentation.authentication.register.RegisterViewModel
+import presentation.room.RoomUI
+import presentation.room.RoomViewModel
 import presentation.room.list.ListRoomUI
 import presentation.room.list.ListRoomViewModel
 import presentation.room.list.NewRoomDialog
@@ -176,6 +179,11 @@ internal fun RootScreen() {
         composable(Screen.ListRooms.name) {
             val viewModel = koinViewModel<ListRoomViewModel>()
             val uiState by viewModel.state.collectAsState()
+            LaunchedEffect(true) {
+                viewModel.flowJoinedRoom.collectLatest {
+                    navController.navigate("${Screen.Room.name}/$it")
+                }
+            }
             val openCreateDialog = remember { mutableStateOf(false) }
             ScreenWrapper(
                 isLoading = uiState.isLoading,
@@ -220,9 +228,33 @@ internal fun RootScreen() {
             }
         }
 
-        composable(Screen.Room.name) {
-
-
+        composable("${Screen.Room.name}/{roomId}") { backStackEntry ->
+            val roomId = backStackEntry.arguments?.getString("roomId")?.toIntOrNull() ?: return@composable
+            val viewModel = koinViewModel<RoomViewModel>()
+            val uiState by viewModel.state.collectAsState()
+            LaunchedEffect(true) {
+                launch {
+                    viewModel.loadRoom(roomId = roomId)
+                }
+                launch {
+                    viewModel.flowLeaveRoom.collectLatest {
+                        navController.navigateUp()
+                    }
+                }
+            }
+            ScreenWrapper(
+                isLoading = uiState.isLoading,
+                title = Screen.Room.title,
+                navigationAction = {
+                    viewModel.leaveRoom()
+                },
+            ) {
+                uiState.room?.let {
+                    RoomUI(
+                        room = it,
+                    )
+                }
+            }
         }
 
     }

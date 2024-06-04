@@ -14,6 +14,7 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import presentation.authentication.login.LoginViewModel
 import presentation.authentication.register.RegisterViewModel
+import presentation.room.RoomViewModel
 import presentation.room.list.ListRoomViewModel
 
 private val settingModule = module {
@@ -41,6 +42,7 @@ private val viewModelModule = module {
     viewModelOf(::LoginViewModel)
     viewModelOf(::RegisterViewModel)
     viewModelOf(::ListRoomViewModel)
+    viewModelOf(::RoomViewModel)
 }
 
 internal fun appModules() = listOf(
