@@ -30,9 +30,6 @@ internal fun LoginUI(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val curLoginClicked by remember {
-            mutableStateOf(onLoginClicked)
-        }
         Spacer(modifier = Modifier.weight(1f))
         OutlinedTextField(
             value = username,
@@ -61,8 +58,7 @@ internal fun LoginUI(
         Spacer(modifier = Modifier.weight(1f))
         OutlinedButton(
             modifier = Modifier,
-            onClick = curLoginClicked,
-            enabled = username.length > 5,
+            onClick = onLoginClicked,
         ) {
             Text(
                 text = "Login"

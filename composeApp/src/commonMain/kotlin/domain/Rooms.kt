@@ -1,8 +1,11 @@
 package domain
 
+typealias RoomId = Int
+
 data class Room(
-    val id: Int = -1,
+    val id: RoomId = -1,
     val name: String,
+    val members: List<RoomMember>,
 )
 
 data class RoomMember(

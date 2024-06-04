@@ -5,16 +5,20 @@ import androidx.lifecycle.viewModelScope
 import data.dto.SignupRequest
 import data.repository.AuthRepository
 import data.repository.impl.AuthRepositoryImpl
+import data.setting.SettingManager
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class RegisterViewModel(
-    private val authRepository: AuthRepository = AuthRepositoryImpl()
+    private val authRepository: AuthRepository,
+    private val settingManager: SettingManager,
 ) : ViewModel() {
 
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
@@ -23,6 +27,9 @@ class RegisterViewModel(
 
     private val _state = MutableStateFlow(State())
     val state = _state.asStateFlow()
+
+    private val _navHomeChannel = Channel<Unit>()
+    val flowNavHome = _navHomeChannel.receiveAsFlow()
 
     fun onEmailChanged(email: String) {
         _state.update { it.copy(email = email) }
@@ -40,11 +47,13 @@ class RegisterViewModel(
         _state.update { it.copy(isLoading = true) }
         val response = authRepository.signup(
             request = SignupRequest(
-                email = state.value.email,
-                username = state.value.username,
-                password = state.value.password
+                email = _state.value.email,
+                username = _state.value.username,
+                password = _state.value.password
             )
         )
+        settingManager.saveToken(token = response.token)
+        _navHomeChannel.send(Unit)
     }.invokeOnCompletion {
         _state.update { it.copy(isLoading = false) }
     }
