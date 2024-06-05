@@ -252,6 +252,8 @@ internal fun RootScreen() {
                 uiState.room?.let {
                     RoomUI(
                         room = it,
+                        message = uiState.message ?: "not yet",
+                        onMessageSendClicked = viewModel::sendMessage,
                     )
                 }
             }

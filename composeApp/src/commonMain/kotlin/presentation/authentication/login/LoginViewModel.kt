@@ -3,7 +3,6 @@ package presentation.authentication.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import data.dto.LoginRequest
-import data.dto.SignupRequest
 import data.repository.AuthRepository
 import data.setting.SettingManager
 import kotlinx.coroutines.CoroutineExceptionHandler
