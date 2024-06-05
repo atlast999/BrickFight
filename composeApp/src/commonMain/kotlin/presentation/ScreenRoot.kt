@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -20,23 +22,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 import presentation.authentication.login.LoginUI
 import presentation.authentication.login.LoginViewModel
 import presentation.authentication.register.RegisterUI
 import presentation.authentication.register.RegisterViewModel
+import presentation.room.RoomUI
+import presentation.room.RoomViewModel
+import presentation.room.list.ListRoomUI
+import presentation.room.list.ListRoomViewModel
+import presentation.room.list.NewRoomDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,6 +99,7 @@ internal fun ScreenWrapper(
     )
 }
 
+@OptIn(KoinExperimentalAPI::class)
 @Composable
 internal fun RootScreen() {
     val navController = rememberNavController()
@@ -109,17 +119,15 @@ internal fun RootScreen() {
         }
     ) {
         composable(Screen.Login.name) {
-            val viewModel = viewModel<LoginViewModel>(
-                factory = remember {
-                    viewModelFactory {
-                        initializer {
-                            LoginViewModel()
-                        }
-                    }
-                }
-            )
+            val viewModel = koinViewModel<LoginViewModel>()
             val uiState by viewModel.state.collectAsState()
+            LaunchedEffect(true) {
+                viewModel.flowNavHome.collectLatest {
+                    navController.navigate(Screen.ListRooms.name)
+                }
+            }
             ScreenWrapper(
+                isLoading = uiState.isLoading,
                 title = Screen.Login.title,
                 navigationIcon = {},
             ) {
@@ -128,8 +136,7 @@ internal fun RootScreen() {
                     onUsernameChanged = viewModel::onUsernameChanged,
                     password = uiState.password,
                     onPasswordChanged = viewModel::onPasswordChanged,
-                    onLoginClicked = {
-                    },
+                    onLoginClicked = viewModel::onLoginClick,
                     onRegisterClicked = {
                         navController.navigate(Screen.Signup.name)
                     }
@@ -138,16 +145,13 @@ internal fun RootScreen() {
         }
 
         composable(Screen.Signup.name) {
-            val viewModel = viewModel<RegisterViewModel>(
-                factory = remember {
-                    viewModelFactory {
-                        initializer {
-                            RegisterViewModel()
-                        }
-                    }
-                }
-            )
+            val viewModel = koinViewModel<RegisterViewModel>()
             val uiState by viewModel.state.collectAsState()
+            LaunchedEffect(true) {
+                viewModel.flowNavHome.collectLatest {
+                    navController.navigate(Screen.ListRooms.name)
+                }
+            }
             ScreenWrapper(
                 isLoading = uiState.isLoading,
                 title = Screen.Signup.title,
@@ -171,10 +175,94 @@ internal fun RootScreen() {
             }
 
         }
+
+        composable(Screen.ListRooms.name) {
+            val viewModel = koinViewModel<ListRoomViewModel>()
+            val uiState by viewModel.state.collectAsState()
+            LaunchedEffect(true) {
+                viewModel.flowJoinedRoom.collectLatest {
+                    navController.navigate("${Screen.Room.name}/$it")
+                }
+            }
+            val openCreateDialog = remember { mutableStateOf(false) }
+            ScreenWrapper(
+                isLoading = uiState.isLoading,
+                title = "Chat rooms",
+                navigationAction = {
+                    navController.navigateUp()
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            openCreateDialog.value = true
+                        },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                        )
+                    }
+                    IconButton(
+                        onClick = viewModel::loadRooms,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = null,
+                        )
+                    }
+                }
+            ) {
+                if (openCreateDialog.value) {
+                    NewRoomDialog(
+                        onDismissRequest = {
+                            openCreateDialog.value = false
+                        },
+                        onCreateClicked = viewModel::createRoom,
+                    )
+                    return@ScreenWrapper
+                }
+                ListRoomUI(
+                    rooms = uiState.rooms,
+                    onRoomClicked = viewModel::joinRoom,
+                )
+            }
+        }
+
+        composable("${Screen.Room.name}/{roomId}") { backStackEntry ->
+            val roomId = backStackEntry.arguments?.getString("roomId")?.toIntOrNull() ?: return@composable
+            val viewModel = koinViewModel<RoomViewModel>()
+            val uiState by viewModel.state.collectAsState()
+            LaunchedEffect(true) {
+                launch {
+                    viewModel.loadRoom(roomId = roomId)
+                }
+                launch {
+                    viewModel.flowLeaveRoom.collectLatest {
+                        navController.navigateUp()
+                    }
+                }
+            }
+            ScreenWrapper(
+                isLoading = uiState.isLoading,
+                title = Screen.Room.title,
+                navigationAction = {
+                    viewModel.leaveRoom()
+                },
+            ) {
+                uiState.room?.let {
+                    RoomUI(
+                        room = it,
+                    )
+                }
+            }
+        }
+
     }
 }
 
 enum class Screen(val title: String) {
     Login(title = "Login"),
-    Signup(title = "Signup")
+    Signup(title = "Signup"),
+    ListRooms(title = "ListRooms"),
+    Room(title = "Room"),
 }

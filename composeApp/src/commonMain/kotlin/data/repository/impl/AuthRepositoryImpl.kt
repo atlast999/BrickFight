@@ -1,5 +1,7 @@
 package data.repository.impl
 
+import data.dto.LoginRequest
+import data.dto.LoginResponse
 import data.dto.SignupRequest
 import data.dto.SignupResponse
 import data.dto.wrapper.AppResponse
@@ -13,7 +15,7 @@ import io.ktor.http.contentType
 import network.KtorClient
 
 class AuthRepositoryImpl(
-    private val client: HttpClient = KtorClient.createClient()
+    private val client: HttpClient,
 ) : AuthRepository {
 
     override suspend fun signup(request: SignupRequest): SignupResponse {
@@ -21,5 +23,12 @@ class AuthRepositoryImpl(
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body<AppResponse<SignupResponse>>().data!!
+    }
+
+    override suspend fun login(request: LoginRequest): LoginResponse {
+        return client.post("login") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body<AppResponse<LoginResponse>>().data!!
     }
 }
