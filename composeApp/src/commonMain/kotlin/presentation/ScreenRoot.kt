@@ -1,7 +1,9 @@
 package presentation
 
+import CameraImage
 import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.RowScope
@@ -24,14 +26,17 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import convertByteArrayToImageBitmap
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -138,7 +143,8 @@ internal fun RootScreen() {
                     onPasswordChanged = viewModel::onPasswordChanged,
                     onLoginClicked = viewModel::onLoginClick,
                     onRegisterClicked = {
-                        navController.navigate(Screen.Signup.name)
+//                        navController.navigate(Screen.Signup.name)
+                        navController.navigate("Camera")
                     }
                 )
             }
@@ -229,7 +235,8 @@ internal fun RootScreen() {
         }
 
         composable("${Screen.Room.name}/{roomId}") { backStackEntry ->
-            val roomId = backStackEntry.arguments?.getString("roomId")?.toIntOrNull() ?: return@composable
+            val roomId =
+                backStackEntry.arguments?.getString("roomId")?.toIntOrNull() ?: return@composable
             val viewModel = koinViewModel<RoomViewModel>()
             val uiState by viewModel.state.collectAsState()
             LaunchedEffect(true) {
@@ -259,8 +266,41 @@ internal fun RootScreen() {
             }
         }
 
+        composable("Camera") {
+            var image by remember {
+                mutableStateOf<ImageBitmap?>(null)
+            }
+            CameraImage(onImage = {
+                image = convertByteArrayToImageBitmap(image = it)
+//                Napier.i("Image: bytes: ${it.bsize}")
+            })
+
+            image?.let {
+                Image(
+                    modifier = Modifier.fillMaxSize(),
+                    bitmap = it,
+                    contentDescription = null,
+                )
+            } ?: Text(text = "No image")
+
+        }
+
     }
 }
+
+class CMPImage(
+    val width: Int,
+    val height: Int,
+    val bytes: ByteArray,
+)
+
+//fun tryThings() {
+//    val skiaImage = Image.makeFromEncoded(byteArrayOf())
+//    skiaImage.toComposeImageBitmap()
+//    val bytes = skiaImage.encodeToData(
+//        format = EncodedImageFormat.WEBP,
+//    )?.bytes
+//}
 
 enum class Screen(val title: String) {
     Login(title = "Login"),
