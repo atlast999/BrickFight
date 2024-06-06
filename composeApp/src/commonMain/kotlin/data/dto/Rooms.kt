@@ -41,3 +41,10 @@ fun RoomDto.toRoom(): Room = Room(
 )
 
 
+@Serializable
+data class ChatMessage(
+    @SerialName("user_id") val userId: Int,
+    @SerialName("content") val content: String,
+)
+
+

@@ -89,7 +89,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
 
             implementation(libs.koin.composeVM)
-
+            val coil_version = "3.0.0-alpha06"
+            implementation("io.coil-kt.coil3:coil-compose:$coil_version")
 
         }
 

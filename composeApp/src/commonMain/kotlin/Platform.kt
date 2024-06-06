@@ -1,17 +1,18 @@
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.ImageBitmap
 
-interface Platform {
-    val name: String
+enum class Platform {
+    Android,
+    Ios,
+    Desktop,
+    Web,
 }
+
 
 expect fun getPlatform(): Platform
 
-expect fun convertByteArrayToImageBitmap(image: ByteArray): ImageBitmap
+//@Composable
+//expect fun CameraImage(
+//    onImage: (ByteArray) -> Unit,
+//)
 
-
-@Composable
-expect fun CameraImage(
-//    onImage: (CMPImage) -> Unit,
-    onImage: (ByteArray) -> Unit,
-)
+expect fun ByteArray.toImageBitmap(): ImageBitmap

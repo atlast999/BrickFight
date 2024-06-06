@@ -20,8 +20,7 @@ import io.ktor.http.contentType
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
-import io.ktor.websocket.readText
-import kotlinx.coroutines.flow.mapNotNull
+import io.ktor.websocket.send
 import kotlinx.coroutines.flow.receiveAsFlow
 
 class RoomRepositoryImpl(
@@ -65,10 +64,14 @@ class RoomRepositoryImpl(
 
 class SocketChannel(private val session: ClientWebSocketSession) {
     fun receiveAsFlow() =
-        session.incoming.receiveAsFlow().mapNotNull { (it as? Frame.Text)?.readText() }
+        session.incoming.receiveAsFlow()
 
     suspend fun send(value: String) {
         session.send(Frame.Text(text = value))
+    }
+
+    suspend fun send(byteArray: ByteArray) {
+        session.send(content = byteArray)
     }
 
     suspend fun close() = session.close(

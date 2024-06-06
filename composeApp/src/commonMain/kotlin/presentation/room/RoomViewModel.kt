@@ -10,6 +10,7 @@ import domain.Room
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -51,13 +52,34 @@ class RoomViewModel(
         socketChannel = roomRepository.startChat(roomId = roomId)
         launch {
             socketChannel!!.receiveAsFlow().collect { message ->
-                _state.update { it.copy(message = message) }
+                _state.update { it.copy(message = message.toString()) }
             }
         }
     }
 
     fun sendMessage(message: String) = viewModelScope.launch {
         socketChannel?.send(message)
+    }
+
+    private val _stateImageData = MutableStateFlow<ByteArray?>(null)
+    val stateImageData: StateFlow<ByteArray?> = _stateImageData.asStateFlow()
+
+    fun startCamera() = viewModelScope.launch {
+        socketChannel = roomRepository.startChat(roomId = 5)
+        launch {
+            socketChannel!!.receiveAsFlow().collect {
+                _stateImageData.value = it.data
+            }
+        }
+    }
+
+    fun endCamera() = viewModelScope.launch {
+        socketChannel?.close()
+        socketChannel = null
+    }
+
+    fun sendImageData(byteArray: ByteArray) = viewModelScope.launch {
+        socketChannel?.send(byteArray = byteArray)
     }
 
     data class State(
