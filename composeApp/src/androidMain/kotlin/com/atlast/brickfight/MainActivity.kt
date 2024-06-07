@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -48,7 +49,11 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
+import domain.ChatMessage
+import domain.Room
+import domain.RoomMember
 import io.ktor.util.moveToByteArray
+import presentation.room.RoomUI
 import java.nio.ByteBuffer
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -210,6 +215,7 @@ class MainActivity : ComponentActivity() {
         height = height,
         bytes = planes[0].buffer.moveToByteArray(),
     )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -219,8 +225,48 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-//@Preview
-//@Composable
-//fun AppAndroidPreview() {
-//    App()
-//}
+@androidx.compose.ui.tooling.preview.Preview(
+    showBackground = true,
+)
+@Composable
+fun AppAndroidPreview() {
+    val list = remember {
+        mutableStateListOf(
+            ChatMessage(
+                sender = RoomMember(
+                    id = 1,
+                    name = "Fake member 1",
+                ),
+                content = "Hello",
+            ),
+            ChatMessage(
+                sender = null,
+                content = "Hi there"
+            )
+        )
+    }
+    RoomUI(
+        room = Room(
+            name = "Fake room",
+            members = listOf(
+                RoomMember(
+                    id = 1,
+                    name = "Fake member 1",
+                )
+            )
+        ),
+        messages = list,
+    ) {
+
+    }
+//    Column {
+//        list.forEach {
+//            if (it.isIncoming) {
+//                IncomingMessageItem(sender = it.sender?.name ?: "Unknown", content = it.content)
+//            } else {
+//                OutgoingMessageItem(content = it.content)
+//            }
+//        }
+//    }
+}
+

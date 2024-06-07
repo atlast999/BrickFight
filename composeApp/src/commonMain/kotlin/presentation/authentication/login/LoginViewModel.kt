@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import data.dto.LoginRequest
 import data.repository.AuthRepository
-import data.setting.SettingManager
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +15,6 @@ import kotlinx.coroutines.launch
 
 class LoginViewModel(
     private val authRepository: AuthRepository,
-    private val settingManager: SettingManager,
 ) : ViewModel() {
 
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
@@ -43,13 +41,12 @@ class LoginViewModel(
 
     fun onLoginClick() = viewModelScope.launch(coroutineExceptionHandler) {
         _state.update { it.copy(isLoading = true) }
-        val response = authRepository.login(
+        authRepository.login(
             request = LoginRequest(
                 username = _state.value.username,
                 password = _state.value.password
             )
         )
-        settingManager.saveToken(token = response.token)
         _navHomeChannel.send(Unit)
     }.invokeOnCompletion {
         _state.update { it.copy(isLoading = false) }

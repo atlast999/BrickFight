@@ -8,9 +8,9 @@ import data.dto.wrapper.AppResponse
 import data.dto.wrapper.PagingModel
 import data.repository.RoomRepository
 import data.setting.SettingManager
+import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.websocket.ClientWebSocketSession
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.converter
 import io.ktor.client.plugins.websocket.sendSerialized
@@ -24,12 +24,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.deserialize
 import io.ktor.websocket.CloseReason
-import io.ktor.websocket.Frame
 import io.ktor.websocket.close
-import io.ktor.websocket.send
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.supervisorScope
 
@@ -38,17 +35,24 @@ class RoomRepositoryImpl(
     private val settingManager: SettingManager,
 ) : RoomRepository {
 
+    private var socketSession: DefaultClientWebSocketSession? = null
+
     override suspend fun fetchRooms(): PagingModel<RoomDto> {
         return client.get("room")
             .body<AppResponse<PagingModel<RoomDto>>>()
             .data!!
     }
 
+    /**
+     * Create new room along with opening socket connection to that room
+     */
     override suspend fun createRoom(request: CreateRoomRequest): CreateRoomResponse {
-        return client.post("room") {
+        val response = client.post("room") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body<AppResponse<CreateRoomResponse>>().data!!
+        openConnection(roomId = response.roomId)
+        return response
     }
 
     override suspend fun getRoom(roomId: Int): RoomDto {
@@ -56,38 +60,33 @@ class RoomRepositoryImpl(
             .body<AppResponse<RoomDto>>().data!!
     }
 
+    /**
+     * Join the room along with opening socket connection to that room
+     */
     override suspend fun joinRoom(roomId: Int) {
         client.put("room/$roomId/join")
-        //connect to socket
+        openConnection(roomId = roomId)
     }
 
+    /**
+     * Leave the room also closing the socket connection
+     */
     override suspend fun leaveRoom(roomId: Int) = supervisorScope {
         client.put("room/$roomId/leave")
         closeConnection()
     }
 
-    override suspend fun startChat(roomId: Int): SocketChannel {
-        return SocketChannel(session = client.webSocketSession(
-            "ws/5/mem1"
-        ) {
-            port = 8080
-        })
-    }
-
-    private var socketSession: DefaultClientWebSocketSession? = null
-    override fun flowChatMessages(roomId: Int): Flow<ChatMessageDto> = flow {
-        client.webSocketSession(urlString = "chat/$roomId") {
-            port = 8080
-        }.run {
-            this@RoomRepositoryImpl.socketSession = this
-            //todo handle connection closed
-            incoming.consumeEach { frame ->
-                converter?.deserialize<ChatMessageDto>(
-                    content = frame
-                )?.let { chatMessageDto ->
-                    emit(chatMessageDto)
-                }
-            }
+    /**
+     * Receive messages from the socket connection when be in a room
+     */
+    override fun flowChatMessages(): Flow<ChatMessageDto> {
+        val session = socketSession ?: throw IllegalStateException("Connection is not established")
+        //todo handle connection closed
+        return session.incoming.receiveAsFlow().mapNotNull { frame ->
+            Napier.d("Receive frame: ${frame.frameType}")
+            session.converter?.deserialize<ChatMessageDto>(
+                content = frame
+            )
         }
     }
 
@@ -110,28 +109,24 @@ class RoomRepositoryImpl(
         }
     }
 
-    private suspend fun closeConnection() {
-        socketSession?.close()
-        socketSession = null
-    }
-}
-
-class SocketChannel(private val session: ClientWebSocketSession) {
-    fun receiveAsFlow() =
-        session.incoming.receiveAsFlow()
-
-    suspend fun send(value: String) {
-        session.send(Frame.Text(text = value))
+    private suspend fun openConnection(roomId: Int) {
+        if (socketSession != null) {
+            throw IllegalStateException("Connection is already established")
+        }
+        val userId =
+            settingManager.getUserId() ?: throw IllegalStateException("Should never happen")
+        socketSession = client.webSocketSession(urlString = "chat/$roomId/$userId") {
+            port = 8080
+        }
     }
 
-    suspend fun send(byteArray: ByteArray) {
-        session.send(content = byteArray)
-    }
-
-    suspend fun close() = session.close(
-        reason = CloseReason(
+    private suspend fun closeConnection(
+        reason: CloseReason = CloseReason(
             code = CloseReason.Codes.NORMAL,
             message = "Client close"
         )
-    )
+    ) {
+        socketSession?.close(reason = reason)
+        socketSession = null
+    }
 }

@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -37,6 +35,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import domain.ChatMessage
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -249,15 +248,12 @@ internal fun RootScreen() {
                     }
                 }
             }
-            val list = remember { mutableStateListOf<String>() }
-            LazyColumn(
+            val listMessage = remember { mutableStateListOf<ChatMessage>() }
 
-            ) {
-                items(list) {
-                    Text(text = it)
-                }
-                items(list.size) {
-                    Text(text = list[it])
+            LaunchedEffect(uiState.incomingMessage) {
+                uiState.incomingMessage?.let {
+                    Napier.i("Incoming message to add: $it")
+                    listMessage.add(it)
                 }
             }
             ScreenWrapper(
@@ -270,7 +266,7 @@ internal fun RootScreen() {
                 uiState.room?.let {
                     RoomUI(
                         room = it,
-                        message = uiState.message ?: "not yet",
+                        messages = listMessage,
                         onMessageSendClicked = viewModel::sendMessage,
                     )
                 }
@@ -281,7 +277,6 @@ internal fun RootScreen() {
             val viewModel = koinViewModel<RoomViewModel>()
             val image by viewModel.stateImageData.collectAsState()
             DisposableEffect(true) {
-                viewModel.startCamera()
 
                 onDispose {
                     viewModel.leaveRoom()

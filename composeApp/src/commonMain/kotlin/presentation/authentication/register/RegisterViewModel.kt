@@ -4,12 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import data.dto.SignupRequest
 import data.repository.AuthRepository
-import data.repository.impl.AuthRepositoryImpl
-import data.setting.SettingManager
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -18,7 +14,6 @@ import kotlinx.coroutines.launch
 
 class RegisterViewModel(
     private val authRepository: AuthRepository,
-    private val settingManager: SettingManager,
 ) : ViewModel() {
 
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
@@ -45,14 +40,13 @@ class RegisterViewModel(
 
     fun onRegisterClick() = viewModelScope.launch(coroutineExceptionHandler) {
         _state.update { it.copy(isLoading = true) }
-        val response = authRepository.signup(
+        authRepository.signup(
             request = SignupRequest(
                 email = _state.value.email,
                 username = _state.value.username,
                 password = _state.value.password
             )
         )
-        settingManager.saveToken(token = response.token)
         _navHomeChannel.send(Unit)
     }.invokeOnCompletion {
         _state.update { it.copy(isLoading = false) }
