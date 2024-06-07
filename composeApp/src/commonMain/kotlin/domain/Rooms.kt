@@ -12,3 +12,11 @@ data class RoomMember(
     val id: Int,
     val name: String,
 )
+
+data class ChatMessage(
+    val sender: RoomMember?,
+    val content: String,
+)
+
+val ChatMessage.isIncoming: Boolean
+    get() = this.sender != null

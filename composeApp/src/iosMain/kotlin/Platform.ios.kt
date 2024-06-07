@@ -1,7 +1,8 @@
-import platform.UIKit.UIDevice
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
+import org.jetbrains.skia.Image
 
-class IOSPlatform: Platform {
-    override val name: String = UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
-}
+actual fun getPlatform(): Platform = Platform.Ios
 
-actual fun getPlatform(): Platform = IOSPlatform()
+actual fun ByteArray.toImageBitmap(): ImageBitmap =
+    Image.makeFromEncoded(this).toComposeImageBitmap()

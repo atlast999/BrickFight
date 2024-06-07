@@ -61,6 +61,13 @@ kotlin {
 
             implementation(libs.kotlinx.coroutines.android)
 
+            implementation("com.google.accompanist:accompanist-permissions:0.35.1-alpha")
+            val camerax_version = "1.4.0-beta01"
+            implementation("androidx.camera:camera-camera2:${camerax_version}")
+            implementation("androidx.camera:camera-view:${camerax_version}")
+            implementation("androidx.camera:camera-lifecycle:${camerax_version}")
+
+
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -82,7 +89,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
 
             implementation(libs.koin.composeVM)
-
+            val coil_version = "3.0.0-alpha06"
+            implementation("io.coil-kt.coil3:coil-compose:$coil_version")
 
         }
 

@@ -1,5 +1,6 @@
 package data.dto
 
+import domain.ChatMessage
 import domain.Room
 import domain.RoomMember
 import kotlinx.serialization.SerialName
@@ -38,6 +39,18 @@ fun RoomDto.toRoom(): Room = Room(
     id = id,
     name = name,
     members = members.map(RoomDto.MemberDto::toMember),
+)
+
+
+@Serializable
+data class ChatMessageDto(
+    @SerialName("user_id") val userId: Int,
+    @SerialName("content") val content: String,
+)
+
+fun ChatMessageDto.toChatMessage(sender: RoomMember?): ChatMessage = ChatMessage(
+    sender = sender,
+    content = content,
 )
 
 

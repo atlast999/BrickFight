@@ -1,5 +1,8 @@
-class JVMPlatform: Platform {
-    override val name: String = "Java ${System.getProperty("java.version")}"
-}
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
+import org.jetbrains.skia.Image
 
-actual fun getPlatform(): Platform = JVMPlatform()
+actual fun getPlatform(): Platform = Platform.Desktop
+
+actual fun ByteArray.toImageBitmap(): ImageBitmap =
+    Image.makeFromEncoded(this).toComposeImageBitmap()

@@ -2,6 +2,7 @@ package presentation
 
 import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.RowScope
@@ -19,9 +20,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -32,6 +35,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import domain.ChatMessage
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -46,6 +50,7 @@ import presentation.room.RoomViewModel
 import presentation.room.list.ListRoomUI
 import presentation.room.list.ListRoomViewModel
 import presentation.room.list.NewRoomDialog
+import toImageBitmap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -229,7 +234,8 @@ internal fun RootScreen() {
         }
 
         composable("${Screen.Room.name}/{roomId}") { backStackEntry ->
-            val roomId = backStackEntry.arguments?.getString("roomId")?.toIntOrNull() ?: return@composable
+            val roomId =
+                backStackEntry.arguments?.getString("roomId")?.toIntOrNull() ?: return@composable
             val viewModel = koinViewModel<RoomViewModel>()
             val uiState by viewModel.state.collectAsState()
             LaunchedEffect(true) {
@@ -242,6 +248,14 @@ internal fun RootScreen() {
                     }
                 }
             }
+            val listMessage = remember { mutableStateListOf<ChatMessage>() }
+
+            LaunchedEffect(uiState.incomingMessage) {
+                uiState.incomingMessage?.let {
+                    Napier.i("Incoming message to add: $it")
+                    listMessage.add(it)
+                }
+            }
             ScreenWrapper(
                 isLoading = uiState.isLoading,
                 title = Screen.Room.title,
@@ -252,9 +266,31 @@ internal fun RootScreen() {
                 uiState.room?.let {
                     RoomUI(
                         room = it,
+                        messages = listMessage,
+                        onMessageSendClicked = viewModel::sendMessage,
                     )
                 }
             }
+        }
+
+        composable("Camera") {
+            val viewModel = koinViewModel<RoomViewModel>()
+            val image by viewModel.stateImageData.collectAsState()
+            DisposableEffect(true) {
+
+                onDispose {
+                    viewModel.leaveRoom()
+                }
+            }
+
+            image?.let {
+                Image(
+                    modifier = Modifier.fillMaxSize(),
+                    bitmap = it.toImageBitmap(),
+                    contentDescription = null,
+                )
+            } ?: Text(text = "No image")
+
         }
 
     }
