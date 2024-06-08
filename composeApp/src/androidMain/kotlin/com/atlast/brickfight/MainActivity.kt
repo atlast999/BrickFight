@@ -50,10 +50,8 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import domain.ChatMessage
-import domain.Room
 import domain.RoomMember
 import io.ktor.util.moveToByteArray
-import presentation.room.RoomUI
 import java.nio.ByteBuffer
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -238,26 +236,14 @@ fun AppAndroidPreview() {
                     name = "Fake member 1",
                 ),
                 content = "Hello",
+                timestamp = System.currentTimeMillis(),
             ),
             ChatMessage(
                 sender = null,
-                content = "Hi there"
+                content = "Hi there",
+                timestamp = System.currentTimeMillis(),
             )
         )
-    }
-    RoomUI(
-        room = Room(
-            name = "Fake room",
-            members = listOf(
-                RoomMember(
-                    id = 1,
-                    name = "Fake member 1",
-                )
-            )
-        ),
-        messages = list,
-    ) {
-
     }
 //    Column {
 //        list.forEach {

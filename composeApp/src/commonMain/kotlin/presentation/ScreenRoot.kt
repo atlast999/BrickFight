@@ -252,7 +252,6 @@ internal fun RootScreen() {
 
             LaunchedEffect(uiState.incomingMessage) {
                 uiState.incomingMessage?.let {
-                    Napier.i("Incoming message to add: $it")
                     listMessage.add(it)
                 }
             }
@@ -267,6 +266,8 @@ internal fun RootScreen() {
                     RoomUI(
                         room = it,
                         messages = listMessage,
+                        outgoingMessage = uiState.outgoingMessage,
+                        onOutgoingMessageChanged = viewModel::onOutgoingMessageChanged,
                         onMessageSendClicked = viewModel::sendMessage,
                     )
                 }

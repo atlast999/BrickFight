@@ -63,9 +63,17 @@ class RoomViewModel(
         _leaveRoomChannel.send(Unit)
     }
 
-    fun sendMessage(message: String) = runTask {
-        roomRepository.sendMessage(message = message)
+    fun onOutgoingMessageChanged(message: String) = _state.update {
+        it.copy(outgoingMessage = message)
     }
+
+    fun sendMessage() = runTask {
+        roomRepository.sendMessage(message = state.value.outgoingMessage)
+        _state.update {
+            it.copy(outgoingMessage = "")
+        }
+    }
+
 
     private suspend fun loadRoomInternal(roomId: Int) {
         val room = roomRepository.getRoom(roomId = roomId).let(RoomDto::toRoom)
@@ -94,5 +102,6 @@ class RoomViewModel(
         val isLoading: Boolean = false,
         val room: Room? = null,
         val incomingMessage: ChatMessage? = null,
+        val outgoingMessage: String = "",
     )
 }

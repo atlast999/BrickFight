@@ -16,6 +16,7 @@ data class RoomMember(
 data class ChatMessage(
     val sender: RoomMember?,
     val content: String,
+    val timestamp: Long,
 )
 
 val ChatMessage.isIncoming: Boolean

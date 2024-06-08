@@ -8,7 +8,6 @@ import data.dto.wrapper.AppResponse
 import data.dto.wrapper.PagingModel
 import data.repository.RoomRepository
 import data.setting.SettingManager
-import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
@@ -29,6 +28,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.supervisorScope
+import kotlinx.datetime.Clock
 
 class RoomRepositoryImpl(
     private val client: HttpClient,
@@ -83,7 +83,6 @@ class RoomRepositoryImpl(
         val session = socketSession ?: throw IllegalStateException("Connection is not established")
         //todo handle connection closed
         return session.incoming.receiveAsFlow().mapNotNull { frame ->
-            Napier.d("Receive frame: ${frame.frameType}")
             session.converter?.deserialize<ChatMessageDto>(
                 content = frame
             )
@@ -101,6 +100,7 @@ class RoomRepositoryImpl(
                 data = ChatMessageDto(
                     userId = userId,
                     content = message,
+                    timestamp = Clock.System.now().toEpochMilliseconds(),
                 )
             )
         }.onFailure {

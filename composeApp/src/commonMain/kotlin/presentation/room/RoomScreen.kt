@@ -12,48 +12,57 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import domain.ChatMessage
 import domain.Room
 import domain.isIncoming
-import io.github.aakira.napier.Napier
+import presentation.recomposeHighlighter
 
 @Composable
 fun RoomUI(
     room: Room,
     messages: SnapshotStateList<ChatMessage>,
-    onMessageSendClicked: (String) -> Unit,
+    outgoingMessage: String,
+    onOutgoingMessageChanged: (String) -> Unit,
+    onMessageSendClicked: () -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "Room: ${room.name}")
+        Text(text = "Room: ${room.name}", modifier = Modifier)
         Text(text = "Members: ")
         room.members.forEach { member ->
             Text(text = "${member.name} : ${member.id}")
         }
-        Napier.d("messages: ${messages.joinToString { it.content }}")
+        val listState = rememberLazyListState()
+        LaunchedEffect(messages.size) {
+            messages.lastIndex.takeIf { it >= 0 }?.let {
+                listState.scrollToItem(it)
+            }
+        }
         LazyColumn(
-            modifier = Modifier.fillMaxWidth().weight(1f),
+            modifier = Modifier.fillMaxWidth().weight(1f).recomposeHighlighter(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.Top,
+            state = listState,
         ) {
             items(messages) { message ->
                 if (message.isIncoming) {
@@ -68,25 +77,48 @@ fun RoomUI(
             }
         }
 
-        var text by remember { mutableStateOf("") }
-        Row(
+        MessageFooter(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            outgoingMessage = outgoingMessage,
+            onOutgoingMessageChanged = onOutgoingMessageChanged,
+            onMessageSendClicked = onMessageSendClicked,
+        )
+    }
+}
+
+@Composable
+fun MessageFooter(
+    modifier: Modifier = Modifier,
+    outgoingMessage: String,
+    onOutgoingMessageChanged: (String) -> Unit,
+    onMessageSendClicked: () -> Unit,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        OutlinedTextField(
+            modifier = Modifier.weight(1f),
+            value = outgoingMessage,
+            onValueChange = onOutgoingMessageChanged,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Send,
+            ),
+            keyboardActions = KeyboardActions(
+                onSend = {
+                    onMessageSendClicked()
+                },
+            ),
+            singleLine = true,
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        OutlinedButton(
+            modifier = Modifier.recomposeHighlighter(),
+            onClick = onMessageSendClicked
         ) {
-            OutlinedTextField(
-                modifier = Modifier.weight(1f),
-                value = text,
-                onValueChange = { text = it },
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            OutlinedButton(
-                onClick = { onMessageSendClicked.invoke(text) }
-            ) {
-                Text(text = "Send")
-            }
+            Text(text = "Send")
         }
     }
-
 }
 
 @Composable
@@ -95,7 +127,7 @@ private fun OutgoingMessageItem(
     content: String,
 ) {
     Box(
-        modifier = modifier.fillMaxWidth().padding(end = 16.dp),
+        modifier = modifier.fillMaxWidth().padding(end = 16.dp).recomposeHighlighter(),
         contentAlignment = Alignment.CenterEnd,
     ) {
         Card(

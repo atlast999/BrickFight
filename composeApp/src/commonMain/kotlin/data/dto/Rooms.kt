@@ -46,11 +46,13 @@ fun RoomDto.toRoom(): Room = Room(
 data class ChatMessageDto(
     @SerialName("user_id") val userId: Int,
     @SerialName("content") val content: String,
+    @SerialName("timestamp") val timestamp: Long,
 )
 
 fun ChatMessageDto.toChatMessage(sender: RoomMember?): ChatMessage = ChatMessage(
     sender = sender,
     content = content,
+    timestamp = timestamp,
 )
 
 
