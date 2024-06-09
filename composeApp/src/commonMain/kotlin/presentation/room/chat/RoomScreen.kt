@@ -1,4 +1,4 @@
-package presentation.room
+package presentation.room.chat
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

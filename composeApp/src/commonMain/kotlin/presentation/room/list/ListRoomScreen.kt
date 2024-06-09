@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedButton
@@ -64,18 +65,31 @@ private fun RoomItem(
 ) {
     Card(
         onClick = { onRoomClicked.invoke(room) },
-        modifier = modifier.padding(10.dp),
+        modifier = modifier.padding(12.dp),
     ) {
-        Row(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Image(
-                imageVector = Icons.Default.Person,
+                imageVector = Icons.Default.Groups,
                 contentDescription = null,
-                modifier = Modifier.size(50.dp)
+                modifier = Modifier.size(40.dp)
                     .background(color = Color.Transparent, shape = CircleShape)
             )
             Spacer(modifier = Modifier.width(20.dp))
             Text(
                 text = room.name
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = room.members.size.toString()
+            )
+            Image(
+                imageVector = Icons.Default.Person,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+                    .background(color = Color.Transparent, shape = CircleShape)
             )
         }
     }

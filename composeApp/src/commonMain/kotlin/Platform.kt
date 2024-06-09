@@ -1,3 +1,4 @@
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.ImageBitmap
 
 enum class Platform {
@@ -10,9 +11,9 @@ enum class Platform {
 
 expect fun getPlatform(): Platform
 
-//@Composable
-//expect fun CameraImage(
-//    onImage: (ByteArray) -> Unit,
-//)
+@Composable
+expect fun CameraImage(
+    onImage: (ByteArray) -> Unit,
+)
 
 expect fun ByteArray.toImageBitmap(): ImageBitmap

@@ -1,3 +1,4 @@
+import android.Manifest
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.ImageFormat
@@ -10,12 +11,26 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
 import java.io.ByteArrayOutputStream
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -41,38 +56,38 @@ class CustomLifecycle : LifecycleOwner {
     override val lifecycle: Lifecycle = lifecycleRegistry
 }
 
-//@OptIn(ExperimentalPermissionsApi::class)
-//@RequiresApi(Build.VERSION_CODES.R)
-//@Composable
-//actual fun CameraImage(
-//    onImage: (ByteArray) -> Unit,
-//) {
-//    val cameraPermissionState = rememberPermissionState(permission = Manifest.permission.CAMERA)
-//    if (cameraPermissionState.status.isGranted.not()) {
-//        if (cameraPermissionState.status.shouldShowRationale) {
-//            Box(
-//                modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
-//            ) {
-//                Text(text = "No permission No camera")
-//            }
-//        }
-//        LaunchedEffect(cameraPermissionState) {
-//            cameraPermissionState.launchPermissionRequest()
-//        }
-//        return
-//    }
-//    val context = LocalContext.current
-//    val customLifecycle = remember { CustomLifecycle() }
-//    DisposableEffect(key1 = customLifecycle) {
-//        customLifecycle.markAsStart()
-//        onDispose {
-//            customLifecycle.markAsDestroyed()
-//        }
-//    }
-//    LaunchedEffect(true) {
-//        cameraImage(context, customLifecycle, onImage)
-//    }
-//}
+@OptIn(ExperimentalPermissionsApi::class)
+@RequiresApi(Build.VERSION_CODES.R)
+@Composable
+actual fun CameraImage(
+    onImage: (ByteArray) -> Unit,
+) {
+    val cameraPermissionState = rememberPermissionState(permission = Manifest.permission.CAMERA)
+    if (cameraPermissionState.status.isGranted.not()) {
+        if (cameraPermissionState.status.shouldShowRationale) {
+            Box(
+                modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+            ) {
+                Text(text = "No permission No camera")
+            }
+        }
+        LaunchedEffect(cameraPermissionState) {
+            cameraPermissionState.launchPermissionRequest()
+        }
+        return
+    }
+    val context = LocalContext.current
+    val customLifecycle = remember { CustomLifecycle() }
+    DisposableEffect(key1 = customLifecycle) {
+        customLifecycle.markAsStart()
+        onDispose {
+            customLifecycle.markAsDestroyed()
+        }
+    }
+    LaunchedEffect(true) {
+        cameraImage(context, customLifecycle, onImage)
+    }
+}
 
 fun yuvImageToJpegByteArray(
     image: ImageProxy,
@@ -157,7 +172,7 @@ private suspend fun cameraImage(
     lifecycleOwner: LifecycleOwner,
     onNewImage: (ByteArray) -> Unit,
 ) {
-    val lensFacing = CameraSelector.LENS_FACING_FRONT
+    val lensFacing = CameraSelector.LENS_FACING_BACK
     val imageAnalysis = ImageAnalysis.Builder()
         .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_YUV_420_888) //default YUV
         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
