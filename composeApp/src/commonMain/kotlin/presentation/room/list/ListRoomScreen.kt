@@ -15,7 +15,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedButton
@@ -29,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -61,18 +65,31 @@ private fun RoomItem(
 ) {
     Card(
         onClick = { onRoomClicked.invoke(room) },
-        modifier = modifier.padding(10.dp),
+        modifier = modifier.padding(12.dp),
     ) {
-        Row(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Image(
-                imageVector = Icons.Default.Person,
+                imageVector = Icons.Default.Groups,
                 contentDescription = null,
-                modifier = Modifier.size(50.dp)
+                modifier = Modifier.size(40.dp)
                     .background(color = Color.Transparent, shape = CircleShape)
             )
             Spacer(modifier = Modifier.width(20.dp))
             Text(
                 text = room.name
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = room.members.size.toString()
+            )
+            Image(
+                imageVector = Icons.Default.Person,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+                    .background(color = Color.Transparent, shape = CircleShape)
             )
         }
     }
@@ -105,7 +122,15 @@ internal fun NewRoomDialog(
                 )
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it }
+                    onValueChange = { name = it },
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            onCreateClicked.invoke(name)
+                        },
+                    ),
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 OutlinedButton(

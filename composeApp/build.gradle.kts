@@ -49,6 +49,10 @@ kotlin {
             isStatic = true
         }
     }
+
+    composeCompiler {
+        enableStrongSkippingMode = true
+    }
     
     sourceSets {
         val desktopMain by getting
@@ -73,6 +77,7 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
@@ -87,6 +92,7 @@ kotlin {
             implementation(libs.ktor.auth)
 
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime)
 
             implementation(libs.koin.composeVM)
             val coil_version = "3.0.0-alpha06"

@@ -1,4 +1,4 @@
-package presentation.room
+package presentation.room.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -63,9 +62,17 @@ class RoomViewModel(
         _leaveRoomChannel.send(Unit)
     }
 
-    fun sendMessage(message: String) = runTask {
-        roomRepository.sendMessage(message = message)
+    fun onOutgoingMessageChanged(message: String) = _state.update {
+        it.copy(outgoingMessage = message)
     }
+
+    fun sendMessage() = runTask {
+        roomRepository.sendMessage(message = state.value.outgoingMessage)
+        _state.update {
+            it.copy(outgoingMessage = "")
+        }
+    }
+
 
     private suspend fun loadRoomInternal(roomId: Int) {
         val room = roomRepository.getRoom(roomId = roomId).let(RoomDto::toRoom)
@@ -87,12 +94,10 @@ class RoomViewModel(
         block()
     }
 
-    private val _stateImageData = MutableStateFlow<ByteArray?>(null)
-    val stateImageData: StateFlow<ByteArray?> = _stateImageData.asStateFlow()
-
     data class State(
         val isLoading: Boolean = false,
         val room: Room? = null,
         val incomingMessage: ChatMessage? = null,
+        val outgoingMessage: String = "",
     )
 }

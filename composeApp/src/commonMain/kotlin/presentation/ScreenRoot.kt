@@ -2,7 +2,6 @@ package presentation
 
 import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.RowScope
@@ -12,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -45,12 +45,13 @@ import presentation.authentication.login.LoginUI
 import presentation.authentication.login.LoginViewModel
 import presentation.authentication.register.RegisterUI
 import presentation.authentication.register.RegisterViewModel
-import presentation.room.RoomUI
-import presentation.room.RoomViewModel
+import presentation.room.call.CallUI
+import presentation.room.call.CallViewModel
+import presentation.room.chat.RoomUI
+import presentation.room.chat.RoomViewModel
 import presentation.room.list.ListRoomUI
 import presentation.room.list.ListRoomViewModel
 import presentation.room.list.NewRoomDialog
-import toImageBitmap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -143,7 +144,8 @@ internal fun RootScreen() {
                     onPasswordChanged = viewModel::onPasswordChanged,
                     onLoginClicked = viewModel::onLoginClick,
                     onRegisterClicked = {
-                        navController.navigate(Screen.Signup.name)
+//                        navController.navigate(Screen.Signup.name)
+                        navController.navigate(Screen.Call.name)
                     }
                 )
             }
@@ -252,7 +254,6 @@ internal fun RootScreen() {
 
             LaunchedEffect(uiState.incomingMessage) {
                 uiState.incomingMessage?.let {
-                    Napier.i("Incoming message to add: $it")
                     listMessage.add(it)
                 }
             }
@@ -262,34 +263,50 @@ internal fun RootScreen() {
                 navigationAction = {
                     viewModel.leaveRoom()
                 },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            navController.navigate(Screen.Call.name)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Videocam,
+                            contentDescription = null,
+                        )
+                    }
+                }
             ) {
                 uiState.room?.let {
                     RoomUI(
                         room = it,
                         messages = listMessage,
+                        outgoingMessage = uiState.outgoingMessage,
+                        onOutgoingMessageChanged = viewModel::onOutgoingMessageChanged,
                         onMessageSendClicked = viewModel::sendMessage,
                     )
                 }
             }
         }
 
-        composable("Camera") {
-            val viewModel = koinViewModel<RoomViewModel>()
-            val image by viewModel.stateImageData.collectAsState()
+        composable(Screen.Call.name) {
+            val viewModel = koinViewModel<CallViewModel>()
+            val incomingFrame by viewModel.frameData.collectAsState()
             DisposableEffect(true) {
-
                 onDispose {
-                    viewModel.leaveRoom()
+                    viewModel.stopStream()
                 }
             }
-
-            image?.let {
-                Image(
-                    modifier = Modifier.fillMaxSize(),
-                    bitmap = it.toImageBitmap(),
-                    contentDescription = null,
+            ScreenWrapper(
+                title = Screen.Call.title,
+                navigationAction = {
+                    navController.navigateUp()
+                },
+            ) {
+                CallUI(
+                    incomingFrame = incomingFrame,
+                    onFrameReceived = viewModel::streamImageByteArray,
                 )
-            } ?: Text(text = "No image")
+            }
 
         }
 
@@ -301,4 +318,5 @@ enum class Screen(val title: String) {
     Signup(title = "Signup"),
     ListRooms(title = "ListRooms"),
     Room(title = "Room"),
+    Call(title = "Call")
 }

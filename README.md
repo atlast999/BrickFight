@@ -24,3 +24,7 @@ You can open the web application by running the `:composeApp:wasmJsBrowserDevelo
 Run configuration:
 - Desktop: desktopRun -DmainClass=MainKt --quiet
 - Web: wasmJsBrowserRun -t --quiet
+
+Compose navigation causes recomposition: https://issuetracker.google.com/issues/225987040?pli=1
+-> Should never be worry about recomposition of a screen when it's in initial state -> took 5 hours
+for this
