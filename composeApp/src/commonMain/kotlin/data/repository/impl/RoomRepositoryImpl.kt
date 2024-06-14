@@ -25,6 +25,7 @@ import io.ktor.serialization.deserialize
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.close
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.supervisorScope
@@ -81,8 +82,9 @@ class RoomRepositoryImpl(
      */
     override fun flowChatMessages(): Flow<ChatMessageDto> {
         val session = socketSession ?: throw IllegalStateException("Connection is not established")
-        //todo handle connection closed
-        return session.incoming.receiveAsFlow().mapNotNull { frame ->
+        return session.incoming.receiveAsFlow().catch {
+            closeConnection()
+        }.mapNotNull { frame ->
             session.converter?.deserialize<ChatMessageDto>(
                 content = frame
             )
