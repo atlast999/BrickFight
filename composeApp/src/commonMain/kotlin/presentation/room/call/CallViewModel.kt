@@ -13,10 +13,9 @@ import io.ktor.websocket.send
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -37,36 +36,28 @@ class CallViewModel(
         capacity = 30,
         onBufferOverflow = BufferOverflow.DROP_LATEST,
     )
-    private val frameQueue = ArrayDeque<ByteArray>()
-    private var started: Boolean = false
     init {
         viewModelScope.launch(Dispatchers.Default) {
             httpClient.webSocketSession(urlString = "call") {
                 port = 8080
             }.also {
                 webSocketSession = it
-            }.incoming.consumeEach { frame ->
-                Napier.d("Send byte: ${frame.data.takeLast(5).take(3).joinToString()}")
-                frameQueue.addLast(frame.data)
-                if (frameQueue.size > 30 && !started) {
-                    launch {
-                        while (true) {
-                            if (frameQueue.isNotEmpty()) {
-                                _frameData.update {
-                                    frameQueue.removeFirst()
-                                }
-                            } else {
-                                delay(100)
-                            }
-                        }
-                    }
+            }.incoming.receiveAsFlow().catch {
+                Napier.e {
+                    "ErrorTAG: incoming ${it.message}"
                 }
-            }
+            }.onEach { frame ->
+                _frameData.update { frame.data }
+                Napier.d("Receive byte: ${frame.data.takeLast(5).take(3).joinToString()}")
+            }.flowOn(Dispatchers.Default)
+                .launchIn(viewModelScope)
         }
-        viewModelScope.launch(Dispatchers.Default) {
 
-        }
-        streamChannel.receiveAsFlow().onEach {
+        streamChannel.receiveAsFlow().catch {
+            Napier.e {
+                "ErrorTAG: consumeStream ${it.message}"
+            }
+        }.onEach {
             Napier.d("Send byte: ${it.takeLast(5).take(3).joinToString()}")
             webSocketSession?.send(content = it)
         }.flowOn(Dispatchers.Default)
