@@ -17,7 +17,7 @@ compose-plugin = "1.6.10"
 androidx_navigation_compose = "2.7.0-alpha07"
 kotlinxCoroutinesCore = "1.8.1" ##work with ktor = "3.0.0-wasm1" https://youtrack.jetbrains.com/issue/KTOR-5587/Ktor-client-for-Kotlin-Wasm
 kotlinxDatetime = "0.6.0"
-ktor = "3.0.0-wasm1"
+ktor = "3.0.0-wasm2"
 napier = "2.7.1"
 
 koinComposeMultiplatform = "1.2.0-Beta4"
