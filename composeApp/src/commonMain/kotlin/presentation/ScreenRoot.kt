@@ -45,6 +45,8 @@ import presentation.authentication.login.LoginUI
 import presentation.authentication.login.LoginViewModel
 import presentation.authentication.register.RegisterUI
 import presentation.authentication.register.RegisterViewModel
+import presentation.game.GameUI
+import presentation.game.GameViewModel
 import presentation.room.call.CallUI
 import presentation.room.call.CallViewModel
 import presentation.room.chat.RoomUI
@@ -145,7 +147,8 @@ internal fun RootScreen() {
                     onLoginClicked = viewModel::onLoginClick,
                     onRegisterClicked = {
 //                        navController.navigate(Screen.Signup.name)
-                        navController.navigate(Screen.Call.name)
+//                        navController.navigate(Screen.Call.name)
+                        navController.navigate(Screen.Game.name)
                     }
                 )
             }
@@ -310,6 +313,25 @@ internal fun RootScreen() {
 
         }
 
+        composable(Screen.Game.name) {
+            val viewModel = koinViewModel<GameViewModel>()
+            val uiState by viewModel.state.collectAsState()
+            ScreenWrapper(
+                title = Screen.Game.title,
+                navigationAction = {
+                    navController.navigateUp()
+                },
+            ) {
+                GameUI(
+                    uiState = uiState,
+                    onUp = viewModel::moveUp,
+                    onDown = viewModel::moveDown,
+                    onLeft = viewModel::moveLeft,
+                    onRight = viewModel::moveRight,
+                )
+            }
+        }
+
     }
 }
 
@@ -318,5 +340,6 @@ enum class Screen(val title: String) {
     Signup(title = "Signup"),
     ListRooms(title = "ListRooms"),
     Room(title = "Room"),
-    Call(title = "Call")
+    Call(title = "Call"),
+    Game(title = "Game"),
 }
