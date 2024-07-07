@@ -35,6 +35,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import domain.ChatMessage
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.collectLatest
@@ -114,7 +115,7 @@ internal fun RootScreen() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.name,
+        startDestination = Route.Login,
         enterTransition = {
             slideIn(initialOffset = {
                 IntOffset(it.width, 0)
@@ -126,17 +127,17 @@ internal fun RootScreen() {
             })
         }
     ) {
-        composable(Screen.Login.name) {
+        composable<Route.Login> {
             val viewModel = koinViewModel<LoginViewModel>()
             val uiState by viewModel.state.collectAsState()
             LaunchedEffect(true) {
                 viewModel.flowNavHome.collectLatest {
-                    navController.navigate(Screen.ListRooms.name)
+                    navController.navigate(Route.RoomList)
                 }
             }
             ScreenWrapper(
                 isLoading = uiState.isLoading,
-                title = Screen.Login.title,
+                title = "Login",
                 navigationIcon = {},
             ) {
                 LoginUI(
@@ -148,23 +149,23 @@ internal fun RootScreen() {
                     onRegisterClicked = {
 //                        navController.navigate(Screen.Signup.name)
 //                        navController.navigate(Screen.Call.name)
-                        navController.navigate(Screen.Game.name)
+                        navController.navigate(Route.Game)
                     }
                 )
             }
         }
 
-        composable(Screen.Signup.name) {
+        composable<Route.SignUp> {
             val viewModel = koinViewModel<RegisterViewModel>()
             val uiState by viewModel.state.collectAsState()
             LaunchedEffect(true) {
                 viewModel.flowNavHome.collectLatest {
-                    navController.navigate(Screen.ListRooms.name)
+                    navController.navigate(Route.RoomList)
                 }
             }
             ScreenWrapper(
                 isLoading = uiState.isLoading,
-                title = Screen.Signup.title,
+                title = "Signup",
                 navigationAction = {
                     navController.navigateUp()
                 },
@@ -186,12 +187,12 @@ internal fun RootScreen() {
 
         }
 
-        composable(Screen.ListRooms.name) {
+        composable<Route.RoomList> {
             val viewModel = koinViewModel<ListRoomViewModel>()
             val uiState by viewModel.state.collectAsState()
             LaunchedEffect(true) {
                 viewModel.flowJoinedRoom.collectLatest {
-                    navController.navigate("${Screen.Room.name}/$it")
+                    navController.navigate(Route.Room(id = it))
                 }
             }
             val openCreateDialog = remember { mutableStateOf(false) }
@@ -238,9 +239,8 @@ internal fun RootScreen() {
             }
         }
 
-        composable("${Screen.Room.name}/{roomId}") { backStackEntry ->
-            val roomId =
-                backStackEntry.arguments?.getString("roomId")?.toIntOrNull() ?: return@composable
+        composable<Route.Room> { backStackEntry ->
+            val roomId = backStackEntry.toRoute<Route.Room>().id
             val viewModel = koinViewModel<RoomViewModel>()
             val uiState by viewModel.state.collectAsState()
             LaunchedEffect(true) {
@@ -262,14 +262,14 @@ internal fun RootScreen() {
             }
             ScreenWrapper(
                 isLoading = uiState.isLoading,
-                title = Screen.Room.title,
+                title = "Room",
                 navigationAction = {
                     viewModel.leaveRoom()
                 },
                 actions = {
                     IconButton(
                         onClick = {
-                            navController.navigate(Screen.Call.name)
+                            navController.navigate(Route.Call)
                         }
                     ) {
                         Icon(
@@ -291,7 +291,7 @@ internal fun RootScreen() {
             }
         }
 
-        composable(Screen.Call.name) {
+        composable<Route.Call> {
             val viewModel = koinViewModel<CallViewModel>()
             val incomingFrame by viewModel.frameData.collectAsState()
             DisposableEffect(true) {
@@ -300,7 +300,7 @@ internal fun RootScreen() {
                 }
             }
             ScreenWrapper(
-                title = Screen.Call.title,
+                title = "Call",
                 navigationAction = {
                     navController.navigateUp()
                 },
@@ -313,11 +313,11 @@ internal fun RootScreen() {
 
         }
 
-        composable(Screen.Game.name) {
+        composable<Route.Game> {
             val viewModel = koinViewModel<GameViewModel>()
             val uiState by viewModel.state.collectAsState()
             ScreenWrapper(
-                title = Screen.Game.title,
+                title = "Game",
                 navigationAction = {
                     navController.navigateUp()
                 },
@@ -333,13 +333,4 @@ internal fun RootScreen() {
         }
 
     }
-}
-
-enum class Screen(val title: String) {
-    Login(title = "Login"),
-    Signup(title = "Signup"),
-    ListRooms(title = "ListRooms"),
-    Room(title = "Room"),
-    Call(title = "Call"),
-    Game(title = "Game"),
 }
